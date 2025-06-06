@@ -22,6 +22,8 @@ router.put(
   movieController.updateMovie
 );
 
+// Lấy chi tiết 1 phim
+router.get('/:id', movieController.getMovieById);
 // Lấy tất cả phim
 router.get('/', movieController.getAllMovies);
 
