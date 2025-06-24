@@ -1,3 +1,4 @@
+require('dotenv').config();
 // Import các thư viện cần thiết
 const express = require('express');
 const dotenv = require('dotenv');

@@ -3,10 +3,15 @@ const router = express.Router();
 const ticketController = require('../controllers/ticketController');
 const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
 
-router.get('/', ticketController.getAllTickets);
-router.get('/:id', ticketController.getTicketById);
-router.post('/', verifyToken, isAdmin, ticketController.createTicket);
+// ✅ Người dùng đăng nhập là có thể đặt vé
+router.post('/', verifyToken, ticketController.createTicket);
+router.get('/booked/:showtimeId', ticketController.getBookedSeats);
+// ✅ Các chức năng dưới yêu cầu Admin
+router.get('/', verifyToken, isAdmin, ticketController.getAllTickets);
+router.get('/:id', verifyToken, isAdmin, ticketController.getTicketById);
 router.put('/:id', verifyToken, isAdmin, ticketController.updateTicket);
 router.delete('/:id', verifyToken, isAdmin, ticketController.deleteTicket);
+
+
 
 module.exports = router;

@@ -1,96 +1,126 @@
-import React, { useState } from 'react';
+// AdminPage.js - Trang Quản trị: Thêm phim mới
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5000/api/movies';
 
 const AdminPage = () => {
-  const [newMovie, setNewMovie] = useState({
-    title: '',
-    genre: '',
-    director: '',
-    duration: '',
-    release_date: '',
-    description: '',
-    subtitle: '',
-    age: '',
-    content: '',
-    image: null,
-    video: null
+  const [phimMoi, setPhimMoi] = useState({
+    title: '', genre: '', director: '', main_actor: '', duration: '', language: '',
+    country: '', release_date: '', description: '', subtitle: '', age: '', content: '',
+    image: null, video: null
   });
-  const navigate = useNavigate();
+  const dieuHuong = useNavigate();
 
-  // Chặn user thường truy cập trang admin
-  React.useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    if (!token || role !== 'Admin') {
-      navigate('/');
-    }
-    // Không fetchMovies ở đây!
-    // eslint-disable-next-line
-  }, [navigate]);
+    if (!token || role !== 'Admin') dieuHuong('/');
+  }, [dieuHuong]);
 
-  const handleAddMovie = async () => {
-    const { title, genre, director, duration, release_date, description, subtitle, age, content } = newMovie;
-    if (!title || !genre || !director || !duration || !release_date || !description || !subtitle || !age || !content) {
-      alert("Vui lòng nhập đầy đủ thông tin.");
-      return;
-    }
+  const xuLyThayDoi = (e) => {
+    const { name, value, files } = e.target;
+    setPhimMoi(prev => ({
+      ...prev,
+      [name]: files ? files[0] : value
+    }));
+  };
 
+  const guiLenMayChu = async () => {
     const token = localStorage.getItem('token');
     const formData = new FormData();
-    Object.entries(newMovie).forEach(([key, val]) => {
+    Object.entries(phimMoi).forEach(([key, val]) => {
       if (val) formData.append(key, val);
     });
 
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
       });
-
       const data = await res.json();
       if (res.ok) {
-        alert('Thêm phim thành công');
-        setNewMovie({
-          title: '', genre: '', director: '', duration: '', release_date: '', description: '', subtitle: '', age: '', content: '', image: null, video: null
+        alert('✅ Thêm phim thành công!');
+        setPhimMoi({
+          title: '', genre: '', director: '', main_actor: '', duration: '', language: '',
+          country: '', release_date: '', description: '', subtitle: '', age: '', content: '',
+          image: null, video: null
         });
       } else {
-        alert(data.error || 'Lỗi khi thêm phim');
+        alert(data.error || '❌ Lỗi khi thêm phim!');
       }
     } catch (err) {
-      alert('Lỗi khi gửi yêu cầu');
+      alert('❌ Không thể kết nối đến máy chủ.');
     }
   };
 
   return (
     <div className="container py-4">
-      <h2 className="mb-4">🎬 Quản lý phim</h2>
+      <h2 className="mb-4 text-primary">🎬 Quản trị - Thêm phim mới</h2>
 
-      <div className="border rounded p-3 mb-5">
-        <h5>Thêm phim mới</h5>
-        <div className="row g-2">
-          <div className="col-md-6">
-            <input className="form-control mb-2" placeholder="Tên phim" value={newMovie.title} onChange={e => setNewMovie({ ...newMovie, title: e.target.value })} />
-            <input className="form-control mb-2" placeholder="Thể loại" value={newMovie.genre} onChange={e => setNewMovie({ ...newMovie, genre: e.target.value })} />
-            <input className="form-control mb-2" placeholder="Đạo diễn" value={newMovie.director} onChange={e => setNewMovie({ ...newMovie, director: e.target.value })} />
-            <input className="form-control mb-2" placeholder="Thời lượng (phút)" value={newMovie.duration} onChange={e => setNewMovie({ ...newMovie, duration: e.target.value })} />
-            <input className="form-control mb-2" placeholder="Phụ đề" value={newMovie.subtitle} onChange={e => setNewMovie({ ...newMovie, subtitle: e.target.value })} />
-            <input className="form-control mb-2" placeholder="Độ tuổi (VD: 16+)" value={newMovie.age} onChange={e => setNewMovie({ ...newMovie, age: e.target.value })} />
-          </div>
-          <div className="col-md-6">
-            <input type="date" className="form-control mb-2" value={newMovie.release_date} onChange={e => setNewMovie({ ...newMovie, release_date: e.target.value })} />
-            <textarea className="form-control mb-2" placeholder="Mô tả" value={newMovie.description} onChange={e => setNewMovie({ ...newMovie, description: e.target.value })} rows={2} />
-            <textarea className="form-control mb-2" placeholder="Nội dung phim" value={newMovie.content} onChange={e => setNewMovie({ ...newMovie, content: e.target.value })} rows={3} />
-            <input type="file" className="form-control mb-2" accept="image/*" onChange={e => setNewMovie({ ...newMovie, image: e.target.files[0] })} />
-            <input type="file" className="form-control mb-2" accept="video/*" onChange={e => setNewMovie({ ...newMovie, video: e.target.files[0] })} />
-          </div>
+      <div className="row g-2">
+        <div className="col-md-6">
+          <label className="form-label">Tên phim</label>
+          <input className="form-control mb-2" name="title" value={phimMoi.title} onChange={xuLyThayDoi} />
         </div>
-        <button className="btn btn-success mt-3" onClick={handleAddMovie}>➕ Thêm phim</button>
+        <div className="col-md-6">
+          <label className="form-label">Thể loại</label>
+          <input className="form-control mb-2" name="genre" value={phimMoi.genre} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Đạo diễn</label>
+          <input className="form-control mb-2" name="director" value={phimMoi.director} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Diễn viên chính</label>
+          <input className="form-control mb-2" name="main_actor" value={phimMoi.main_actor} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Thời lượng (phút)</label>
+          <input className="form-control mb-2" name="duration" value={phimMoi.duration} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Ngôn ngữ</label>
+          <input className="form-control mb-2" name="language" value={phimMoi.language} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Quốc gia</label>
+          <input className="form-control mb-2" name="country" value={phimMoi.country} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Ngày khởi chiếu</label>
+          <input type="date" className="form-control mb-2" name="release_date" value={phimMoi.release_date} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Phụ đề</label>
+          <input className="form-control mb-2" name="subtitle" value={phimMoi.subtitle} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Độ tuổi (VD: 16+)</label>
+          <input className="form-control mb-2" name="age" value={phimMoi.age} onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-12">
+          <label className="form-label">Mô tả</label>
+          <textarea className="form-control mb-2" name="description" value={phimMoi.description} onChange={xuLyThayDoi} rows={2} />
+        </div>
+        <div className="col-12">
+          <label className="form-label">Nội dung phim</label>
+          <textarea className="form-control mb-2" name="content" value={phimMoi.content} onChange={xuLyThayDoi} rows={3} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Ảnh Poster</label>
+          <input type="file" className="form-control mb-2" name="image" accept="image/*" onChange={xuLyThayDoi} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Video Trailer</label>
+          <input type="file" className="form-control mb-2" name="video" accept="video/*" onChange={xuLyThayDoi} />
+        </div>
       </div>
+
+      <button className="btn btn-success mt-3" onClick={guiLenMayChu}>
+        ➕ Thêm phim
+      </button>
     </div>
   );
 };

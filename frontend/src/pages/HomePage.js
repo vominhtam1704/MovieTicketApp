@@ -15,7 +15,7 @@ const HomePage = () => {
   useEffect(() => {
     axios.get('http://localhost:5000/api/movies')
       .then(res => {
-        setMovies(Array.isArray(res.data) ? res.data : []);
+        setMovies(res.data || []);
         setLoading(false);
       })
       .catch(() => {
@@ -24,23 +24,36 @@ const HomePage = () => {
       });
   }, []);
 
-  // Lọc phim theo tên
+  const handleDelete = (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa phim này?')) return;
+    fetch(`http://localhost:5000/api/movies/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || 'Đã xóa');
+        setMovies(movies.filter(m => m.movie_id !== id));
+      })
+      .catch(err => alert('Lỗi khi xóa phim'));
+  };
+
   const filteredMovies = movies.filter(movie =>
     movie.title?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <Container className="mt-4">
-      <div className="mb-4 d-flex flex-column align-items-center justify-content-center">
-        <h1 className="text-center mb-3" style={{ fontWeight: 700, fontSize: 38, color: "#2d3a4b", letterSpacing: 1 }}>
-          Ứng dụng vé xem phim
-        </h1>
-        {token && role === 'Admin' && (
-          <Button variant="success" size="lg" onClick={() => navigate('/admin')}>
-            Thêm phim
-          </Button>
-        )}
-      </div>
+      <h1 className="text-center mb-3 text-primary">🎬 Ứng dụng vé xem phim</h1>
+
+      {token && role === 'Admin' && (
+        <div className="text-center mb-3">
+          <Button variant="success" onClick={() => navigate('/admin')}>Thêm phim</Button>
+        </div>
+      )}
+
       <Form className="mb-4 mx-auto" style={{ maxWidth: 500 }}>
         <Form.Control
           type="text"
@@ -49,74 +62,46 @@ const HomePage = () => {
           onChange={e => setSearch(e.target.value)}
         />
       </Form>
-      <h4 className="mb-4 text-center text-secondary">Danh sách phim nổi bật</h4>
-      {loading && (
-        <div className="d-flex justify-content-center my-5">
-          <Spinner animation="border" variant="primary" />
-        </div>
-      )}
-      {error && <Alert variant="danger" className="text-center">{error}</Alert>}
-      <Row>
-        {filteredMovies.map(movie => (
-          <Col md={4} sm={6} xs={12} className="mb-4" key={movie.movie_id}>
-            <Card className="h-100 shadow-sm d-flex flex-column">
-              <div style={{ width: '100%', height: 220, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+      {loading ? (
+        <div className="text-center"><Spinner animation="border" /></div>
+      ) : error ? (
+        <Alert variant="danger">{error}</Alert>
+      ) : (
+        <Row>
+          {filteredMovies.map(movie => (
+            <Col md={4} className="mb-4" key={movie.movie_id}>
+              <Card>
                 <Card.Img
                   variant="top"
-                  src={
-                    movie.image
-                      ? `http://localhost:5000${movie.image}`
-                      : "https://via.placeholder.com/400x220?text=Movie+Poster"
-                  }
-                  alt={movie.title}
-                  style={{ maxHeight: 220, width: 'auto', objectFit: 'contain' }}
+                  src={movie.image ? `http://localhost:5000${movie.image}` : 'https://via.placeholder.com/400x220?text=Movie+Poster'}
+                  style={{ height: 220, objectFit: 'cover' }}
                 />
-              </div>
-              <Card.Body className="d-flex flex-column">
-                <Card.Title>{movie.title}</Card.Title>
-                <Card.Text>
-                  <strong>Thể loại:</strong> {movie.genre}<br />
-                  <strong>Đạo diễn:</strong> {movie.director}
-                </Card.Text>
-                <div className="mt-auto">
-                  <Button
-                    variant="info"
-                    className="me-2 mb-2"
-                    onClick={() => navigate(`/movies/${movie.movie_id}`)}
-                  >
-                    Chi tiết
-                  </Button>
-                  {token && role === 'Admin' && (
-                    <>
-                      <Button
-                        variant="warning"
-                        className="me-2 mb-2"
-                        onClick={() => navigate(`/edit-movie/${movie.movie_id}`)}
-                      >
-                        Sửa
-                      </Button>
-                      <Button
-                        variant="danger"
-                        className="mb-2"
-                        onClick={() => navigate(`/admin?delete=${movie.movie_id}`)}
-                      >
-                        Xóa
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </Card.Body>
-              <Card.Footer className="text-center">
-                <small className="text-muted">
-                  Khởi chiếu: {movie.release_date ? new Date(movie.release_date).toLocaleDateString() : ''}
-                </small>
-              </Card.Footer>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-      {(!loading && filteredMovies.length === 0) && (
-        <Alert variant="info" className="text-center">Không tìm thấy phim nào phù hợp.</Alert>
+                <Card.Body>
+  <Card.Title>{movie.title}</Card.Title>
+  <Card.Text>
+    <strong>Thể loại:</strong> {movie.genre}<br />
+    <strong>Đạo diễn:</strong> {movie.director}
+  </Card.Text>
+  <Card.Text>
+    <strong>Khởi chiếu:</strong> {movie.release_date ? new Date(movie.release_date).toLocaleDateString() : 'Chưa rõ'}
+  </Card.Text>
+  <Button variant="info" onClick={() => navigate(`/movies/${movie.movie_id}`)} className="me-2">Chi tiết</Button>
+  {token && role === 'Admin' && (
+    <>
+      <Button variant="warning" onClick={() => navigate(`/edit-movie/${movie.movie_id}`)} className="me-2">Sửa</Button>
+      <Button variant="danger" onClick={() => handleDelete(movie.movie_id)}>Xóa</Button>
+    </>
+  )}
+</Card.Body>
+
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      )}
+      {!loading && filteredMovies.length === 0 && (
+        <Alert variant="info" className="text-center">Không tìm thấy phim nào.</Alert>
       )}
     </Container>
   );
